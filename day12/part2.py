@@ -2,13 +2,13 @@ import sys
 
 def main():
     try:
-        sys.stdin = open('test2.txt','r')
+        sys.stdin = open('input.txt','r')
         # sys.stdout = open('output.txt','w')
         # sys.stderr = open('error.txt','w')
         input = sys.stdin.readline
         # print = sys.stdout.write
 
-        R = 5
+        R = 140
         grid = []
         for r in range(R):
             row = input()
@@ -24,13 +24,15 @@ def main():
             for dir in dirs:
                 x, y = dirs[dir]
                 nr, nc = r+x, c+y
-                if 0 <= nr < R and 0 <= nc < C and grid[nr][nc]==grid[r][c] and (nr,nc) not in visited:
+                if 0 <= nr < R and 0 <= nc < C and grid[nr][nc]==grid[r][c]:
+                    if (nr,nc) not in visited:
                         calcArea(nr,nc)
 
         def calcPeri(r,c,checkDir,moveDir):
             # print(grid[r][c],r,c,checkDir,moveDir)
-            if (r,c,checkDir) in visited: return
-            visited.add((r,c,checkDir))
+            if (r,c,checkDir) in vis: return
+            vis.add((r,c,checkDir))
+            vis.add((r,c))
 
             nonlocal peri
             cr, cc = dirs[checkDir]
@@ -75,7 +77,51 @@ def main():
                     # print('yeah so')
                     calcPeri(r,c,checkDir,moveDir)
 
+            for dir in dirs:
+                x, y = dirs[dir]
+                nr,nc = r+x,c+y
+                if 0 <= nr < R and 0 <= nc < C and grid[nr][nc]==grid[r][c]:
+                    if (nr,nc) not in vis:
+                        flag = False
+                        dfs(nr,nc)
+                else:
+                    if dir == 'up':
+                        calcPeri(r,c,dir,'right')
+                    elif dir == 'left':
+                        calcPeri(r,c,dir,'up')
+                    elif dir == 'right':
+                        calcPeri(r,c,dir,'down')
+                    else:
+                        calcPeri(r,c,dir,'left')
+
+        def dfs(r,c):
+            vis.add((r,c))
+            flag = True
+
+            for dir in dirs:
+                x,y = dirs[dir]
+                nr,nc = r+x,c+y
+                if 0 <= nr < R and 0 <= nc < C and grid[nr][nc]==grid[r][c]:
+                    if (nr,nc) not in vis:
+                        flag = False
+                        dfs(nr,nc)
+                else:
+                    if dir == 'up':
+                        calcPeri(r,c,dir,'right')
+                    elif dir == 'left':
+                        calcPeri(r,c,dir,'up')
+                    elif dir == 'right':
+                        calcPeri(r,c,dir,'down')
+                    else:
+                        calcPeri(r,c,dir,'left')
+
+            for x,y in [[-1,-1],[-1,1],[1,-1],[1,1]]:
+                nr,nc = r+x,c+y
+                if 0 <= nr < R and 0 <= nc < C and grid[nr][nc]==grid[r][c] and (nr,nc) not in vis:
+                    dfs(nr,nc)
+
         visited = set()
+        vis = set()
         res = area = peri = 0
         dirs = {'up':[-1,0], 'right':[0,1], 'down':[1,0], 'left':[0,-1]}
 
@@ -84,7 +130,8 @@ def main():
                 if grid[r][c].isalpha() and (r,c) not in visited:
                     area = peri = 0
                     calcArea(r,c)
-                    calcPeri(r,c, 'up', 'right')
+                    dfs(r,c)
+                    # calcPeri(r,c, 'up', 'right')
                     res += area * peri
                     print(grid[r][c],area,peri,area*peri)
         print(res)
